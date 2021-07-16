@@ -1,15 +1,17 @@
 
 ///////////////////////////////////////////////////////////////////////
-///// import statements and requirements
+///// IMPORT STATEMENTS AND REQUIREMENTS 
 //////////////////////////////////////////////////////////////////////
 
 
+const { raw } = require('express');
 const express = require('express');
-const { map } = require('mssql');
-const { Connection, Request } = require("tedious");
+const fs = require('fs');
 const logger = require('morgan');
 const config = require('../config/config.js')
 const api = require('./api/v1');
+const { connectToDB } = require('./api/v1/services/connectToDB.js');
+const { transformData } = require('./api/v1/services/transformData')
 const port = process.env.PORT || 3000;
 
 const app = express();
@@ -20,66 +22,38 @@ app.use(express.urlencoded({
 }));  
 app.use(logger('tiny'));
 app.use('/api/v1', api); // sets API path
+app.use('/api/v1/services', connectToDB)
 
 
 ////////////////////////////////////////////////////////////////////////
-///// App Start - can serve views too
+///// APP START 
 ///////////////////////////////////////////////////////////////////////
 
 
 app.get('/', (req, res) => {
-  conns()
-  res.json({'message': "got it"});
+  transformData()
+  // connectToDB()
+  //   .then(data => { 
+  //     if(data){
+  //       res.json(data);
+  //       console.log("hit here")
+  //     } else {
+  //       res.json({message: "something happened here"})
+  //       console.log("hit someting")
+  //     }
+  //   })
+  //   .catch(e => {
+  //     console.log(e.message)
+  //   })
+
+
+  // TODO: render homepage
   
 })
 
-function conns(){
-  console.log("hit this")
-    // database conn
-  
-    const connection = new Connection(config.DATABASE);
-
-    // Attempt to connect and execute queries if connection goes through
-    connection.on("connect", err => {
-      if (err) {
-        console.error(err.message);
-      } else {
-        rows = queryDatabase();
-      }
-    });
-    
-    connection.connect();
-    
-    function queryDatabase() {
-      console.log("Reading rows from the Table...");
-    
-      // Read all rows from table
-      const request = new Request(
-        `SELECT *
-        FROM DBO.TRIAL1
-         `,
-        (err, rowCount) => {
-          if (err) {
-            console.error(err.message);
-          } else {
-            console.log(`${rowCount} row(s) returned`);
-            console.log(`rows are ${rows}`)
-          }
-        }
-      );
-    
-      request.on("row", row => {
-        // handle the data
-      });
-    
-      connection.execSql(request);
-    }
-
-}
-
+// Temp SQL conn used to be here
 
 // app listens on process.ENV.PORT
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
-  conns()
 });
