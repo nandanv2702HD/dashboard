@@ -1,7 +1,8 @@
+const { response } = require("express");
 const { Connection, Request } = require("tedious");
 const config = require('../../../../config/config.js')
 
-async function connectToDB(){
+function connectToDB(dataRequest) {
     var data = []
     console.log("hit this")
       // database conn
@@ -13,44 +14,41 @@ async function connectToDB(){
         if (err) {
           console.error(err.message);
         } else {
-          queryDatabase()
+            queryDatabase(dataRequest, connection)
         }
       });
       
       connection.connect();
-      
-      async function queryDatabase() {
-        console.log("Reading rows from the Table...");
-      
-        // Read all rows from table
-        const request = new Request(
-          `SELECT *
-          FROM DBO.TRIAL1
-           `,
-          (err, rowCount) => {
-            if (err) {
-              console.error(`error is ${err.message}`);
-            } else {
-              console.log(`row received`);
-            }
-          }
-        );
-      
-        Promise(request.on("row", row => {
-          // handle the data
-          console.log(row)
-          data.push(row)
-        }))
-        .then(data => {
-          return data;
-        });
-      
-        connection.execSql(request);
-      }
+    
+  }
 
-      
-  
-  }  
+// query the database with the request input from the api route
+function queryDatabase(dataRequest, connection) {
+  console.log("querying database");
+  data = []
+
+  // handle request
+  const request = new Request(
+    dataRequest
+    ,
+    (err, rowCount, row) => {
+      if (err) {
+        console.error(`error is ${err.message}`);
+      } else {
+        console.log(`row received\n`);
+        response.send(row)
+        console.log(`rowcout is ${rowCount}`)
+      }
+    }
+  );
+
+  request.on("row", row => {
+    // handle the data
+    console.log(`row received\n`);
+  });
+
+  connection.execSql(request);
+};
 
 module.exports = {
     connectToDB

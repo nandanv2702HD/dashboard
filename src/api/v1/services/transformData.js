@@ -5,7 +5,8 @@
 const fs = require('fs');
 const logger = require('morgan');
 const { nextTick } = require('process');
-const config = require('../../../../config/config.js')
+const config = require('../../../../config/config.js');
+const { connectToDB } = require('./connectToDB.js');
 
 ///////////////////////////////////////////////////////////////////////
 ///// INSERT LOCAL AOS FILES TO DB
@@ -16,7 +17,7 @@ async function transformData(){
 
     const files = fs.readdir("C:/Users/venkatn1/Documents/Test AOS Files", (err, files) => {
         if(!err){
-            console.log(files)
+            // console.log(files)
             return files
         } else {
             console.log("fs read err")
@@ -40,12 +41,21 @@ async function transformData(){
             rawData.push(data.split(","))
         });
 
+        let prev = rawData[0][0]
+        checkCommodity(prev)
         rawData.forEach(datapoint => {
-            if(!datapoint.includes('') && await checkCommodity(datapoint[0])){
+            if(!datapoint.includes('')){
+                console.log(datapoint[0])
+                if(datapoint[0] !== prev){
+                    console.log("this")
+                    checkCommodity(datapoint[0])
+                    .then(data => console.log(data))
+                }
                 datapoint.shift()
-                insertRow(datapoint)
-            };
-
+                console.log(datapoint)
+                console.log("in the datapiint area")
+                // insertRow(datapoint)
+            } 
             return;
         });
     
@@ -53,15 +63,14 @@ async function transformData(){
     })
 }
 
-async function checkCommodity(commodityName) {
+function checkCommodity (commodityName){
     // check if commodity is table
 
+    dataRequest = `SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES`
 
+    connectToDB(dataRequest)
 
     // if not table, create table
-
-
-
 }
 
 async function insertRow(data){
