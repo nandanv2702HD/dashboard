@@ -3,8 +3,6 @@
 ///// IMPORT STATEMENTS AND REQUIREMENTS 
 //////////////////////////////////////////////////////////////////////
 
-
-const { raw } = require('express');
 const express = require('express');
 const fs = require('fs');
 const logger = require('morgan');
@@ -13,6 +11,7 @@ const api = require('./api/v1');
 const { connectToDB } = require('./api/v1/services/connectToDB.js');
 const { transformData } = require('./api/v1/services/transformData')
 const port = process.env.PORT || 3000;
+const models = require('./api/v1/models');
 
 const app = express();
 
@@ -54,6 +53,9 @@ app.get('/', (req, res) => {
 // Temp SQL conn used to be here
 
 // app listens on process.ENV.PORT
-app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`)
+
+models.sequelize.sync().then(() => {
+  app.listen(port, () => {
+    console.log(`Example app listening at http://localhost:${port}`)
+  });
 });

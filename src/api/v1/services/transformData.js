@@ -7,6 +7,10 @@ const logger = require('morgan');
 const { nextTick } = require('process');
 const config = require('../../../../config/config.js');
 const { connectToDB } = require('./connectToDB.js');
+const db = require('../models');
+const { Console } = require('console');
+const sequelize = db.sequelize,
+Sequelize = db.Sequelize;
 
 ///////////////////////////////////////////////////////////////////////
 ///// INSERT LOCAL AOS FILES TO DB
@@ -37,38 +41,21 @@ async function transformData(){
     
         let rawData = []
         dataArray = data.toString().split(/\r?\n/);
+
         dataArray.forEach(data => {
             rawData.push(data.split(","))
         });
 
-        let prev = rawData[0][0]
-        checkCommodity(prev)
-        rawData.forEach(datapoint => {
-            if(!datapoint.includes('')){
-                console.log(datapoint[0])
-                if(datapoint[0] !== prev){
-                    console.log("this")
-                    checkCommodity(datapoint[0])
-                    .then(data => console.log(data))
-                }
-                datapoint.shift()
-                console.log(datapoint)
-                console.log("in the datapiint area")
-                // insertRow(datapoint)
-            } 
-            return;
-        });
-    
-        console.log(rawData)
+        console.log(`raw data is ${JSON.stringify(rawData)}`)
+
+        db.AOS.bulkCreate(rawData).then((res) => console.log(`res is: \n ${res}`))
     })
 }
 
-function checkCommodity (commodityName){
+function checkCommodity (models){
     // check if commodity is table
 
-    dataRequest = `SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES`
-
-    connectToDB(dataRequest)
+    //connectToDB()
 
     // if not table, create table
 }

@@ -1,55 +1,64 @@
 const { response } = require("express");
-const { Connection, Request } = require("tedious");
-const config = require('../../../../config/config.js')
+// const { Connection, Request } = require("tedious");
+const config = require('../../../../config/config.js');
+// const Sequelize = require('sequelize');
+const AOSmodel = require('../models/AOS');
+const db = require('../models');
+const sequelize = db.sequelize,
+Sequelize = db.Sequelize;
 
-function connectToDB(dataRequest) {
-    var data = []
-    console.log("hit this")
-      // database conn
-    
-      const connection = new Connection(config.DATABASE);
+// connects to the SQL database
+connectToDB = () => {
+
+  // initializes connection pool
+  const sequelize = new Sequelize(config.DATABASE.options.database, config.DATABASE.authentication.options.userName, config.DATABASE.authentication.options.password, {
+    host: config.DATABASE.server,
+    dialect: 'mssql',
   
-      // Attempt to connect and execute queries if connection goes through
-      connection.on("connect", err => {
-        if (err) {
-          console.error(err.message);
-        } else {
-            queryDatabase(dataRequest, connection)
-        }
-      });
-      
-      connection.connect();
-    
-  }
-
-// query the database with the request input from the api route
-function queryDatabase(dataRequest, connection) {
-  console.log("querying database");
-  data = []
-
-  // handle request
-  const request = new Request(
-    dataRequest
-    ,
-    (err, rowCount, row) => {
-      if (err) {
-        console.error(`error is ${err.message}`);
-      } else {
-        console.log(`row received\n`);
-        response.send(row)
-        console.log(`rowcout is ${rowCount}`)
-      }
+    pool: {
+      max: 5,
+      min: 0,
+      idle: 10000
     }
-  );
-
-  request.on("row", row => {
-    // handle the data
-    console.log(`row received\n`);
   });
 
-  connection.execSql(request);
-};
+  // authenticates connection then connects to AOSmodel table
+  sequelize
+    .authenticate()
+    .then(() => {
+      // import model, sync, post
+      AOSmodel(sequelize, Sequelize).sequelize
+      .sync()
+      .then(() => {
+        console.log("synced")
+        db.AOS.create({
+          commodityCode: 'XPLTT',
+          makeOrBuy: "F",
+          partNumber: "12321A",
+          issuingSLoc: "S0348",
+          receivingSLoc: "S0349",
+          huNumber: 42234324,
+          plantCode: 1001,
+          currBike: 23,
+          highBike: 28,
+          rackNumber: 12,
+          productionDate: "12/12/2021"
+        })
+        .then((res) => {
+          console.log(res)
+        })
+      })
+
+      console.log('Connection has been established successfully.');
+    })
+    .catch(err => {
+      console.error('Unable to connect to the database:', err);
+    });
+
+
+}
+
 
 module.exports = {
-    connectToDB
-}
+  connectToDB
+};
